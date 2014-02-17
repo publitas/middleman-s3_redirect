@@ -13,30 +13,20 @@ module Middleman
       :after_build
     )
 
-      def redirect(from, to)
-        redirects << RedirectEntry.new(from, to)
+      def s3_redirect(from, to)
+        s3_redirects << RedirectEntry.new(from, to)
       end
 
-      def redirects
-        @redirects ||= []
+      def s3_redirects
+        @s3_redirects ||= []
       end
 
       protected
       class RedirectEntry
         attr_reader :from, :to
         def initialize(from, to)
-          @from = normalize(from)
+          @from = from
           @to = to
-        end
-
-        protected
-        def normalize(path)
-          unless path =~ /\.html$/
-            path << '/' unless path =~ /\/$/
-            path << 'index.html'
-          end
-          path = path[1..path.length] if path[0] = '/'
-          path
         end
       end
 
@@ -67,8 +57,8 @@ module Middleman
       alias :included :registered
 
       def generate
-        options.redirects.each do |redirect|
-          puts "Redirecting /#{redirect.from} to #{redirect.to}"
+        options.s3_redirects.each do |redirect|
+          puts "Redirecting #{redirect.from} to #{redirect.to}"
           bucket.files.create({
             :key => redirect.from,
             :public => true,
@@ -98,8 +88,8 @@ module Middleman
       end
 
       module Helpers
-        def redirect(from, to)
-          s3_redirect_options.redirect(from, to)
+        def s3_redirect(from, to)
+          s3_redirect_options.s3_redirect(from, to)
         end
 
         def s3_redirect_options
